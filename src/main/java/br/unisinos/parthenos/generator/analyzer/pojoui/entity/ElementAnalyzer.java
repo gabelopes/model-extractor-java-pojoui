@@ -57,6 +57,19 @@ public abstract class ElementAnalyzer implements FactAnalyzer, VertexCreator, La
     return this.getElementAnnotation() != null;
   }
 
+  private int getUnaryExpressionInteger(UnaryExpr unaryExpr) {
+    if (!unaryExpr.isPrefix() || !unaryExpr.getExpression().isIntegerLiteralExpr()) { return 0; }
+
+    final UnaryExpr.Operator operator = unaryExpr.getOperator();
+    final int value = ((IntegerLiteralExpr) unaryExpr.getExpression()).asInt();
+
+    if (operator == UnaryExpr.Operator.MINUS) {
+      return -value;
+    }
+
+    return value;
+  }
+
   @Override
   public String getLabel() {
     final Expression labelExpression = this.getAnnotationExpression("label");
@@ -72,11 +85,16 @@ public abstract class ElementAnalyzer implements FactAnalyzer, VertexCreator, La
   public int getPosition() {
     final Expression positionExpression = this.getAnnotationExpression("position");
 
-    if (positionExpression != null && positionExpression.isIntegerLiteralExpr()) {
-      return ((IntegerLiteralExpr) positionExpression).asInt();
+    if (positionExpression == null ||
+      !(positionExpression.isIntegerLiteralExpr() || positionExpression.isUnaryExpr())) {
+      return 0;
     }
 
-    return 0;
+    if (positionExpression.isUnaryExpr()) {
+      return this.getUnaryExpressionInteger((UnaryExpr) positionExpression);
+    }
+
+    return ((IntegerLiteralExpr) positionExpression).asInt();
   }
 
   @Override
